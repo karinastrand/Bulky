@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
-using Bulky.DataAccess.Data;
+using BulkyBook.DataAccess.Data;
 
 #nullable disable
 
-namespace Bulky.DataAccess.Migrations
+namespace BulkyBook.DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class Modify : Migration

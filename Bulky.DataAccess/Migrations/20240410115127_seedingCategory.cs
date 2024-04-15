@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
-using Bulky.DataAccess.Data;
-using Bulky.Models;
+using BulkyBook.DataAccess.Data;
+using BulkyBook.Models;
 
 #nullable disable
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace Bulky.DataAccess.Migrations
+namespace BulkyBook.DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class seedingCategory : Migration
