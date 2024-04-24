@@ -12,8 +12,12 @@ public class ApplicationDbContext :IdentityDbContext<IdentityUser>
     }
     public DbSet<Category> Categories { get; set; }
     public DbSet<Product> Products { get; set; }   
-    public DbSet<ApplicationUser> applicationUsers { get; set; }
     public DbSet<Company> Companies { get; set; }
+    public DbSet<ShoppingCart> ProductCarts { get; set; }
+    public DbSet<ApplicationUser> applicationUsers { get; set; }
+    public DbSet<OrderHeader> OrderHeaders { get; set; }
+    public DbSet<OrderDetail> OrderDetails { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -36,6 +40,40 @@ public class ApplicationDbContext :IdentityDbContext<IdentityUser>
                      Name = "History",
                      DisplayOrder = 3
                  }
+           );
+        modelBuilder.Entity<Company>().HasData(
+                new Company
+                {
+                    Id=1,
+                    Name="Tech Solution",
+                    StreetAdress="123 Tech St",
+                    City="Tech City",
+                    PostalCode="12121",
+                    State="IL",
+                    Phone="12321122"
+                },
+                new Company
+                {
+                    Id = 2,
+                    Name = "Vivid Books",
+                    StreetAdress = "999 Vid St",
+                    City = "Vide City",
+                    PostalCode = "13421",
+                    State = "IL",
+                    Phone = "54321122"
+                },
+                new Company
+                {
+                    Id = 3,
+                    Name = "Readers Club",
+                    StreetAdress = "199 Main St",
+                    City = "Lala Land",
+                    PostalCode = "12121",
+                    State = "NY",
+                    Phone = "54344122"
+                }
+
+
            );
         modelBuilder.Entity<Product>().HasData(
             new Product
