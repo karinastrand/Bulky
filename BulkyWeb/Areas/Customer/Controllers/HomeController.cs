@@ -6,6 +6,7 @@ using BulkyBook.DataAccess.Repository.IRepository;
 using System.Collections;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using BulkyBook.Utility;
 namespace BulkyBookWeb.Areas.Customer.Controllers;
 [Area("Customer")]
 public class HomeController : Controller
@@ -15,12 +16,16 @@ public class HomeController : Controller
 
     public HomeController(ILogger<HomeController> logger,IUnitOfWork unitOfWork)
     {
+        
+       
         _logger = logger;
         _unitOfWork = unitOfWork;
     }
 
     public IActionResult Index()
     {
+        
+
         IEnumerable<Product> productList=_unitOfWork.Product.GetAll(includeProperties: "Category");
         return View(productList);
     }
@@ -44,17 +49,23 @@ public class HomeController : Controller
         var userId=claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value; 
         shoppingCart.ApplicationUserId = userId;
         ShoppingCart cartFromDb=_unitOfWork.ShoppingCart.Get(u=>u.ApplicationUserId== userId && u.ProductId==shoppingCart.ProductId);
-        if(cartFromDb==null)
+       
+        if (cartFromDb!=null)
         {
-            _unitOfWork.ShoppingCart.Add(shoppingCart);
+            cartFromDb.Count += shoppingCart.Count;
+            _unitOfWork.ShoppingCart.Update(cartFromDb);
+            _unitOfWork.Save();
         }
         else 
-        {
-            cartFromDb.Count+= shoppingCart.Count;
-            _unitOfWork.ShoppingCart.Update(cartFromDb);
+        {      
+            
+            _unitOfWork.ShoppingCart.Add(shoppingCart);
+            _unitOfWork.Save();
+            HttpContext.Session.SetInt32(SD.SessionCart, 
+                _unitOfWork.ShoppingCart.GetAll(u => u.ApplicationUserId == userId).Count());
         }
         TempData["success"] = "Cart updated successfully";
-        _unitOfWork.Save();
+        
         return RedirectToAction(nameof(Index));
     }
 
