@@ -111,6 +111,7 @@ public class CartController : Controller
         }
 		if (applicationUser.CompanyId.GetValueOrDefault() == 0)
 		{
+            //dynamic url
             var domain = Request.Scheme + "://" + Request.Host.Value + "/";
             var options = new Stripe.Checkout.SessionCreateOptions
             {
