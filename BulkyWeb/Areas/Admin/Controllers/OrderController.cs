@@ -123,7 +123,7 @@ public class OrderController : Controller
             .GetAll(u => u.OrderHeaderId == OrderVM.OrderHeader.Id, includeProperties: "Product");
 
         
-            var domain = "https://localhost:7275/";
+            var domain = Request.Scheme+"://"+Request.Host.Value+"/";
             var options = new Stripe.Checkout.SessionCreateOptions
             {
                 SuccessUrl = domain + $"admin/order/PaymentConfirmation?orderHeaderId={OrderVM.OrderHeader.Id}",
