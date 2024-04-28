@@ -10,5 +10,6 @@ public  interface IUnitOfWork
     IOrderHeaderRepository OrderHeader { get; }
     IOrderDetailRepository OrderDetail { get; }
     IApplicationUserRepository ApplicationUser { get; }
+    IProductImageRepository ProductImage { get; }
     void Save();
 }

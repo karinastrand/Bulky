@@ -17,9 +17,11 @@ public class ApplicationUser:IdentityUser
     public string? PostalCode { get; set; }
     public int? CompanyId { get; set; }
 
-    [ForeignKey(nameof(CompanyId))]
+    [ForeignKey("CompanyId")]
+
     [ValidateNever]
     public Company? Company { get; set; }
+
     [NotMapped]
     public string Role {  get; set; }
 

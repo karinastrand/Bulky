@@ -8,35 +8,111 @@ using BulkyBook.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using BulkyBook.Utility;
 using Microsoft.EntityFrameworkCore;
+using BulkyBook.DataAccess.Repository;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
+
 namespace BulkyBookWeb.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = SD.Role_Admin)]
 public class UserController : Controller
 {
-    private readonly ApplicationDbContext _db;
-    private readonly IWebHostEnvironment _webHostEnvironment;
-    public UserController(ApplicationDbContext db, IWebHostEnvironment webHostEnvironment)
-    {
-       _db=db;
-    }
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly UserManager<IdentityUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
+    public UserController(IUnitOfWork unitOfWork, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
+    {
+        _unitOfWork = unitOfWork;
+        _userManager = userManager;
+        _roleManager = roleManager;
+    }
     public IActionResult Index()
     {
       return View();    
     }
    
+
+    public IActionResult RoleManagement(string userId) 
+    {
+
+        userId = userId.Trim('\'', '(', ')');
+        
+        RoleManagementVM RoleVM = new RoleManagementVM()
+        {
+            ApplicationUser = _unitOfWork.ApplicationUser.Get(u=>u.Id==userId, includeProperties:"Company"),
+
+            RoleList = _roleManager.Roles.Select(u => new SelectListItem
+            {
+                Text = u.Name,
+                Value = u.Id
+            }),
+            CompanyList = _unitOfWork.Company.GetAll().Select(u => new SelectListItem
+            {
+                Text = u.Name,
+                Value = u.Id.ToString()
+            })
+            
+
+        };
+        RoleVM.ApplicationUser.Role = _userManager.GetRolesAsync(_unitOfWork.ApplicationUser.Get(u => u.Id==userId)).GetAwaiter().GetResult().FirstOrDefault();
+        
+        return View(RoleVM);
+    }
+    [HttpPost]
+    public IActionResult RoleManagement(RoleManagementVM roleManagementVM)
+    {
+       
+        string oldRole=_userManager.GetRolesAsync(_unitOfWork.ApplicationUser.Get(u=>u.Id==roleManagementVM.ApplicationUser.Id)).GetAwaiter().GetResult().FirstOrDefault();
+        string newRole = _roleManager.Roles.FirstOrDefault(u => u.Id == roleManagementVM.ApplicationUser.Role).Name;
+        ApplicationUser applicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == roleManagementVM.ApplicationUser.Id);
+        string test = roleManagementVM.ApplicationUser.Role;
+        if (!(newRole==oldRole))
+        {
+            
+            if(applicationUser.Role==SD.Role_Company)
+            {
+                applicationUser.CompanyId=roleManagementVM.ApplicationUser.CompanyId;
+            }
+            if(oldRole==SD.Role_Company) 
+            {
+                applicationUser.CompanyId = null;
+            }
+            _unitOfWork.ApplicationUser.Update(applicationUser);
+            _unitOfWork.Save();
+            _userManager.RemoveFromRoleAsync(applicationUser,oldRole).GetAwaiter().GetResult();
+            _userManager.AddToRoleAsync(applicationUser,newRole).GetAwaiter().GetResult();
+
+        }
+        else
+        {
+            if (oldRole == SD.Role_Company && applicationUser.CompanyId != roleManagementVM.ApplicationUser.CompanyId)
+            {
+                applicationUser.CompanyId = roleManagementVM.ApplicationUser.CompanyId;
+                _unitOfWork.ApplicationUser.Update(applicationUser);
+                _unitOfWork.Save();
+            }
+        }
+
+
+
+        return RedirectToAction("Index");
+
+    }
+    
+
     #region API CALLS
     [HttpGet]
     public IActionResult GetAll()
     {
-        List<ApplicationUser> objUserList = _db.applicationUsers.Include(u=>u.Company).ToList();
-        var userRoles = _db.UserRoles.ToList();
-        var roles=_db.Roles.ToList();
-        foreach (ApplicationUser user in objUserList) 
+        List<ApplicationUser> objUserList = _unitOfWork.ApplicationUser.GetAll(includeProperties:"Company").ToList();
+        
+       
+        foreach (var user in objUserList) 
         {
-            var roleId = userRoles.FirstOrDefault(u => u.UserId == user.Id).RoleId;
-             user.Role = roles.FirstOrDefault(u => u.Id == roleId).Name;
+           
+            user.Role=_userManager.GetRolesAsync(user).GetAwaiter().GetResult().FirstOrDefault();
             if (user.Company == null) 
             {
                 user.Company = new()
@@ -52,7 +128,7 @@ public class UserController : Controller
     [HttpPost]
     public IActionResult LockUnlock([FromBody]string id)
     {
-        var objFromDb = _db.applicationUsers.FirstOrDefault(u => u.Id == id);
+        var objFromDb = _unitOfWork.ApplicationUser.Get(u => u.Id == id);
         if(objFromDb == null) 
         {
             return Json(new { success=false,message="Error while Locking/Unlocking" });
@@ -66,7 +142,8 @@ public class UserController : Controller
         {
             objFromDb.LockoutEnd= DateTime.Now.AddYears(1000);
         }
-        _db.SaveChanges();
+        _unitOfWork.ApplicationUser.Update(objFromDb);
+        _unitOfWork.Save();
 
         return Json(new { success = true, message = "Locking/Unlocking successful" });
 

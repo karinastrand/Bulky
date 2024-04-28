@@ -1,8 +1,7 @@
 ﻿
+
 using BulkyBook.DataAccess.Data;
 using BulkyBook.DataAccess.Repository.IRepository;
-using BulkyBook.Models;
-using System.Linq.Expressions;
 
 namespace BulkyBook.DataAccess.Repository;
 
@@ -28,10 +27,8 @@ public class ProductRepository : Repository<Product>, IProductRepository
             objFromDb.Price100 = obj.Price100;
             objFromDb.Price50 = obj.Price50;
             objFromDb.Author = obj.Author;
-            if(obj.ImageUrl!=null)
-            {
-                objFromDb.ImageUrl=obj.ImageUrl;
-            }
+            objFromDb.ProductImages = obj.ProductImages;
+            
            
         }
     }
