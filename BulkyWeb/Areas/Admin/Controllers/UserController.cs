@@ -34,15 +34,15 @@ public class UserController : Controller
     }
    
 
-    public IActionResult RoleManagement(string userId) 
+    public IActionResult RoleManagment(string userId) 
     {
 
         userId = userId.Trim('\'', '(', ')');
-        
-        RoleManagementVM RoleVM = new RoleManagementVM()
-        {
-            ApplicationUser = _unitOfWork.ApplicationUser.Get(u=>u.Id==userId, includeProperties:"Company"),
 
+        RoleManagmentVM RoleVM = new RoleManagmentVM()
+        {
+            ApplicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == userId, includeProperties: "Company"),
+         
             RoleList = _roleManager.Roles.Select(u => new SelectListItem
             {
                 Text = u.Name,
@@ -56,24 +56,25 @@ public class UserController : Controller
             
 
         };
+      
         RoleVM.ApplicationUser.Role = _userManager.GetRolesAsync(_unitOfWork.ApplicationUser.Get(u => u.Id==userId)).GetAwaiter().GetResult().FirstOrDefault();
         
         return View(RoleVM);
     }
     [HttpPost]
-    public IActionResult RoleManagement(RoleManagementVM roleManagementVM)
+    public IActionResult RoleManagment(RoleManagmentVM roleManagmentVM)
     {
        
-        string oldRole=_userManager.GetRolesAsync(_unitOfWork.ApplicationUser.Get(u=>u.Id==roleManagementVM.ApplicationUser.Id)).GetAwaiter().GetResult().FirstOrDefault();
-        string newRole = _roleManager.Roles.FirstOrDefault(u => u.Id == roleManagementVM.ApplicationUser.Role).Name;
-        ApplicationUser applicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == roleManagementVM.ApplicationUser.Id);
-        string test = roleManagementVM.ApplicationUser.Role;
+        string oldRole=_userManager.GetRolesAsync(_unitOfWork.ApplicationUser.Get(u=>u.Id==roleManagmentVM.ApplicationUser.Id)).GetAwaiter().GetResult().FirstOrDefault();
+        string newRole = _roleManager.Roles.FirstOrDefault(u => u.Id == roleManagmentVM.ApplicationUser.Role).Name;
+        ApplicationUser applicationUser = _unitOfWork.ApplicationUser.Get(u => u.Id == roleManagmentVM.ApplicationUser.Id);
+        string test = roleManagmentVM.ApplicationUser.Role;
         if (!(newRole==oldRole))
         {
             
-            if(applicationUser.Role==SD.Role_Company)
+            if(newRole==SD.Role_Company)
             {
-                applicationUser.CompanyId=roleManagementVM.ApplicationUser.CompanyId;
+                applicationUser.CompanyId=roleManagmentVM.ApplicationUser.CompanyId;
             }
             if(oldRole==SD.Role_Company) 
             {
@@ -87,9 +88,9 @@ public class UserController : Controller
         }
         else
         {
-            if (oldRole == SD.Role_Company && applicationUser.CompanyId != roleManagementVM.ApplicationUser.CompanyId)
+            if (oldRole == SD.Role_Company && applicationUser.CompanyId != roleManagmentVM.ApplicationUser.CompanyId)
             {
-                applicationUser.CompanyId = roleManagementVM.ApplicationUser.CompanyId;
+                applicationUser.CompanyId = roleManagmentVM.ApplicationUser.CompanyId;
                 _unitOfWork.ApplicationUser.Update(applicationUser);
                 _unitOfWork.Save();
             }
